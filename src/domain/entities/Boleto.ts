@@ -2,7 +2,7 @@ import { Column, Entity } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
 @Entity({ name: 'invoices' })
-export class Invoice extends BaseEntity {
+export class Boleto extends BaseEntity {
   @Column({ nullable: false })
   amount: number;
 
@@ -47,6 +47,39 @@ export class Invoice extends BaseEntity {
 
   @Column({ type: 'json', nullable: true })
   discounts: Discount[];
+
+  @Column({ nullable: true })
+  providerId: string;
+
+  @Column({ default: false })
+  status: string;
+
+  @Column({ type: 'json', nullable: true })
+  providerPayload: JSON;
+
+  @Column()
+  orderId: number;
+
+  createDTO = () => {
+    return {
+      amount: this.amount,
+      taxId: this.taxId,
+      name: this.name,
+      streetLine1: this.street_line_1,
+      streetLine2: this.street_line_2,
+      district: this.district,
+      city: this.city,
+      stateCode: this.state_code,
+      zipCode: this.zip_code,
+    };
+  };
+
+  setProvider = (providerPayload) => {
+    const item = providerPayload[0];
+    this.providerId = item.id;
+    this.status = item.status;
+    this.providerPayload = item;
+  };
 }
 
 class Discount {

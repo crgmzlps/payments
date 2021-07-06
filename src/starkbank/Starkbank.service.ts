@@ -19,4 +19,8 @@ export class StarkbankService {
   async createInvoice(dto) {
     return starkbank.invoice.create([dto]);
   }
+
+  async createBoleto(dto) {
+    return starkbank.boleto.create([dto]);
+  }
 }

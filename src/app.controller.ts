@@ -12,7 +12,7 @@ export class AppController {
   }
 
   @Post('invoice')
-  async create(@Request() req: Request): Promise<Invoice> {
+  async createInvoice(@Request() req: Request): Promise<Invoice> {
     const createdBy = 'Rest API';
     const payload = {
       createdBy,
@@ -20,5 +20,16 @@ export class AppController {
       ...req.body,
     };
     return this.appService.createInvoice(payload);
+  }
+
+  @Post('boletos')
+  async createBoleto(@Request() req: Request): Promise<Invoice> {
+    const createdBy = 'Rest API';
+    const payload = {
+      createdBy,
+      lastChangedBy: createdBy,
+      ...req.body,
+    };
+    return this.appService.createBoleto(payload);
   }
 }

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
 //import { S3Module } from 'nestjs-s3';
+import * as ormconfig from '../ormconfig';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import * as ormconfig from '../ormconfig';
 import { Invoice } from './domain/entities/invoice.entity';
 import { StarkbankModule } from './starkbank/startbank.module';
 //import { UploadModule } from './upload/upload.module';
@@ -12,6 +12,7 @@ import { StarkbankModule } from './starkbank/startbank.module';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { LogLevel } from '@sentry/types';
 import { Produto } from './domain/entities/produto.entity';
+import { KafkaModule } from './kafka/kafka.module';
 // import { KafkaModule } from './kafka/kafka.module';
 
 @Module({
@@ -30,6 +31,15 @@ import { Produto } from './domain/entities/produto.entity';
       environment: process.env.STARKBANK_ENV,
       id: process.env.STARKBANK_ID,
       privateKey: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),
+    }),
+    KafkaModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return {
+          brokers: [configService.get('KAFKA_BROKER')],
+        };
+      },
     }),
 
     // KafkaModule.forRoot({
@@ -57,6 +67,6 @@ import { Produto } from './domain/entities/produto.entity';
     */
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, InvoicePixConsumer],
 })
 export class AppModule {}

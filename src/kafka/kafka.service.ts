@@ -1,30 +1,60 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Kafka, KafkaConfig, Producer } from 'kafkajs';
+import {
+  Inject,
+  Injectable,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from '@nestjs/common';
+import {
+  Consumer,
+  ConsumerRunConfig,
+  ConsumerSubscribeTopic,
+  Kafka,
+  KafkaConfig,
+  Producer,
+  ProducerRecord,
+} from 'kafkajs';
 import { KAFKA_MODULE_CONFIG } from './kafka.constants';
 
 @Injectable()
-export class KafkaService extends Kafka {
+export class KafkaService
+  extends Kafka
+  implements OnModuleInit, OnApplicationShutdown
+{
   private producerInstante: Producer;
+  private readonly consumers: Consumer[] = [];
 
   constructor(
     @Inject(KAFKA_MODULE_CONFIG)
     private kafkaConfig: KafkaConfig,
   ) {
     super(kafkaConfig);
-    this.producerInstante = this.producer();
-
-    this.producerInstante.connect();
+    this.producerInstante = super.producer();
   }
 
-  async sendPayload(payload) {
+  async sendPayload(payload: ProducerRecord) {
     // try {
-    const response = await this.producerInstante.send({
-      topic: 'no5nmjx4-notification-created',
-      messages: [{ value: JSON.stringify(payload) }],
-    });
+    const response = await this.producerInstante.send(payload);
 
     // } catch(error) {
     //   console.log('error')
     // }
+  }
+
+  async consume(topic: ConsumerSubscribeTopic, config: ConsumerRunConfig) {
+    const consumer = this.consumer({ groupId: 'payments' });
+    await consumer.connect();
+    await consumer.subscribe(topic);
+    await consumer.run(config);
+    this.consumers.push(consumer);
+  }
+
+  async onModuleInit() {
+    await this.producerInstante.connect();
+  }
+  async onApplicationShutdown() {
+    await this.producerInstante.disconnect();
+    for (const consumer of this.consumers) {
+      await consumer.disconnect();
+    }
   }
 }
